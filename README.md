@@ -105,7 +105,7 @@ For example, a student who knows Python may want to learn UI/UX, while another s
 
 ### Team Name
 
-**[Your Team Name]**
+**[VEXORA]**
 
 ### Team Members
 
