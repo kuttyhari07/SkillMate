@@ -45,7 +45,6 @@ export const calculateMatchScore = (currentUser, candidate) => {
     reasons.push(`Highly rated mentor (${candidateRating} ★)`);
   }
 
-  // Cap at 98% (unless perfect)
   const finalScore = Math.min(98, Math.max(score, 15));
 
   return {
@@ -86,7 +85,6 @@ export const findSmartMatches = (currentUser, allUsers = []) => {
     };
   });
 
-  // Sort descending by match score
   return matches.sort((a, b) => b.matchScore - a.matchScore);
 };
 

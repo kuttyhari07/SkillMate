@@ -7,7 +7,6 @@ export const createMeetingRoom = async ({ title, date, time, durationMinutes = 6
     process.env.GOOGLE_REFRESH_TOKEN
   );
 
-  // If Google Meet OAuth is configured, we can attempt Google Calendar Event creation
   if (isGoogleConfigured) {
     try {
       // In production with tokens:

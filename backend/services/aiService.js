@@ -172,7 +172,6 @@ export const chatWithAI = async ({ message, context = {} }) => {
 };
 
 export const getPersonalizedRecommendation = ({ user, progress, recentScores = [] }) => {
-  // Analyzes user scores and progress to generate smart dashboard advice
   if (!progress || !progress.currentLevel) {
     return {
       badge: 'Welcome Starter',

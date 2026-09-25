@@ -18,7 +18,7 @@ router.get('/', authMiddleware, (req, res) => {
 });
 
 // Create peer practice challenge
-router.post('/', authMiddleware, (req, res) => {
+router.post('/', authMiddleware, async (req, res) => {
   try {
     const { assignedToId, skill, title, description, difficulty = 'Medium', timeMinutes = 20, questions = [] } = req.body;
     const store = getStore();

@@ -31,7 +31,7 @@ router.get('/:partnerId', authMiddleware, (req, res) => {
 });
 
 // Send message via REST endpoint (also supported via WebSocket)
-router.post('/', authMiddleware, (req, res) => {
+router.post('/', authMiddleware, async (req, res) => {
   try {
     const { receiverId, content } = req.body;
     const store = getStore();
