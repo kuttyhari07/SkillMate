@@ -29,6 +29,7 @@ import Profile from './pages/Profile';
 import EmailLogs from './pages/EmailLogs';
 import Assessment from './pages/Assessment';
 import AdminDashboard from './pages/AdminDashboard';
+import Notifications from './pages/Notifications';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, requireAdmin = false }) => {
@@ -82,6 +83,7 @@ export default function App() {
                 <Route path="/my-learning" element={<ProtectedRoute><MyLearning /></ProtectedRoute>} />
                 <Route path="/my-teaching" element={<ProtectedRoute><MyTeaching /></ProtectedRoute>} />
                 <Route path="/email-logs" element={<ProtectedRoute><EmailLogs /></ProtectedRoute>} />
+                <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
                 <Route path="/assessment" element={<ProtectedRoute><Assessment /></ProtectedRoute>} />
 
                 {/* Admin Analytics Protected Page */}

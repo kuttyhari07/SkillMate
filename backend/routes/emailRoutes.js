@@ -1,12 +1,13 @@
 import express from 'express';
-import { getEmailLogs, sendEmail } from '../services/emailService.js';
+import { getEmailLogs, sendEmail, getActiveEmailProvider } from '../services/emailService.js';
 import { authMiddleware } from '../middleware/auth.js';
 
 const router = express.Router();
 
 router.get('/logs', authMiddleware, (req, res) => {
   const logs = getEmailLogs();
-  res.json({ logs });
+  const activeProvider = getActiveEmailProvider();
+  res.json({ logs, activeProvider });
 });
 
 router.post('/send', authMiddleware, async (req, res) => {

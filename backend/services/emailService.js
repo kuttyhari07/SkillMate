@@ -18,7 +18,7 @@ let resendClient = null;
 if (RESEND_KEY) {
   try {
     resendClient = new Resend(RESEND_KEY);
-    console.log('[EmailService] Resend API client initialized.');
+    console.log('[EmailService] Resend API client initialized with API key.');
   } catch (err) {
     console.warn('[EmailService] Failed to init Resend client:', err.message);
   }
@@ -36,37 +36,19 @@ if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
         pass: SMTP_PASS
       }
     });
-    console.log('[EmailService] Generic SMTP Transporter configured for:', SMTP_HOST);
   } catch (err) {
-    console.warn('[EmailService] Generic SMTP init error:', err.message);
-  }
-} else if (BREVO_SMTP_USER && BREVO_SMTP_PASS) {
-  try {
-    smtpTransporter = nodemailer.createTransport({
-      host: 'smtp-relay.brevo.com',
-      port: 587,
-      secure: false,
-      auth: {
-        user: BREVO_SMTP_USER,
-        pass: BREVO_SMTP_PASS
-      }
-    });
-    console.log('[EmailService] Brevo SMTP Transporter configured.');
-  } catch (err) {
-    console.warn('[EmailService] Brevo SMTP init error:', err.message);
+    console.warn('[EmailService] SMTP init error:', err.message);
   }
 }
 
 /**
- * Detect which email delivery channel to prioritize
+ * Detect which email delivery channel to prioritize (Resend is primary)
  */
 export const getActiveEmailProvider = () => {
+  if (RESEND_KEY && resendClient) return 'resend';
   const explicit = (process.env.EMAIL_PROVIDER || '').toLowerCase();
-  if (explicit === 'resend' && RESEND_KEY) return 'resend';
+  if (explicit === 'resend') return 'resend';
   if (explicit === 'brevo' && (BREVO_KEY || (BREVO_SMTP_USER && BREVO_SMTP_PASS))) return 'brevo';
-  if (explicit === 'smtp' && smtpTransporter) return 'smtp';
-
-  if (RESEND_KEY) return 'resend';
   if (BREVO_KEY) return 'brevo_api';
   if (BREVO_SMTP_USER && BREVO_SMTP_PASS) return 'brevo_smtp';
   if (smtpTransporter) return 'smtp';
@@ -127,11 +109,12 @@ export const sendEmail = async ({ to, subject, html, text, category = 'General' 
   store.emailLogs.unshift(logEntry);
   saveStore();
 
-  // 1. Try Resend if configured
-  if (provider === 'resend' && resendClient) {
+  // 1. Send via Resend (Primary Provider with RESEND_API_KEY)
+  if (resendClient) {
     try {
+      const from = process.env.RESEND_FROM || process.env.EMAIL_FROM || 'SkillMate <onboarding@resend.dev>';
       const res = await resendClient.emails.send({
-        from: process.env.RESEND_FROM || 'SkillMate <onboarding@resend.dev>',
+        from,
         to: [to],
         subject,
         html,
@@ -139,23 +122,30 @@ export const sendEmail = async ({ to, subject, html, text, category = 'General' 
       });
 
       if (res.error) {
-        throw new Error(res.error.message || 'Resend delivery failed');
+        logEntry.status = 'preview_logged';
+        logEntry.error = res.error.message;
+        saveStore();
+        console.warn(`[EmailService - Resend Warning] Could not deliver to ${to}: ${res.error.message}`);
+        return { success: false, mode: 'resend', error: res.error.message, logEntry };
       }
 
       logEntry.status = 'sent';
+      logEntry.provider = 'resend';
       logEntry.providerMessageId = res.data?.id;
       saveStore();
-      console.log(`[EmailService - Resend] Email dispatched successfully to ${to} (${subject})`);
+      console.log(`[EmailService - Resend] Email dispatched successfully to ${to} (${subject}) [ID: ${res.data?.id}]`);
       return { success: true, mode: 'resend', id: res.data?.id, logEntry };
     } catch (err) {
       console.error(`[EmailService - Resend Error] Failed to send to ${to}:`, err.message);
+      logEntry.status = 'preview_logged';
       logEntry.error = err.message;
-      // Fallback will continue below
+      saveStore();
+      return { success: false, mode: 'resend', error: err.message, logEntry };
     }
   }
 
   // 2. Try Brevo API if configured
-  if ((provider === 'brevo_api' || (BREVO_KEY && logEntry.status !== 'sent'))) {
+  if (BREVO_KEY) {
     try {
       const res = await sendViaBrevoApi({ to, subject, html, text });
       logEntry.status = 'sent';
@@ -167,11 +157,10 @@ export const sendEmail = async ({ to, subject, html, text, category = 'General' 
     } catch (err) {
       console.error(`[EmailService - Brevo API Error] Failed to send to ${to}:`, err.message);
       logEntry.error = err.message;
-      // Fallback will continue below
     }
   }
 
-  // 3. Try SMTP Transporter (Brevo SMTP or custom SMTP)
+  // 3. Fallback SMTP if configured
   if (smtpTransporter && logEntry.status !== 'sent') {
     try {
       const info = await smtpTransporter.sendMail({
@@ -185,10 +174,10 @@ export const sendEmail = async ({ to, subject, html, text, category = 'General' 
       logEntry.provider = 'smtp';
       logEntry.providerMessageId = info.messageId;
       saveStore();
-      console.log(`[EmailService - SMTP] Email dispatched successfully to ${to} (${subject})`);
+      console.log(`[EmailService - SMTP Fallback] Email dispatched successfully to ${to} (${subject})`);
       return { success: true, mode: 'smtp', id: info.messageId, logEntry };
     } catch (err) {
-      console.error(`[EmailService - SMTP Error] Failed to send to ${to}:`, err.message);
+      console.error(`[EmailService - SMTP Fallback Error] Failed to send to ${to}:`, err.message);
       logEntry.error = err.message;
     }
   }
@@ -489,6 +478,35 @@ export const emailTemplates = {
       subject: `🏆 Level Completed! ${nextLevel} is now Unlocked`,
       category: 'Learning',
       html: baseTemplate(title, content, { url: 'http://localhost:5173/my-learning', text: 'Continue Roadmap' })
+    };
+  },
+
+  // 11. Platform Notification Alert (In-App Notification & Test Dispatch)
+  notificationAlert: (userName, titleText, messageText, actionLink = '/notifications', category = 'Notification') => {
+    const heading = titleText || 'SkillMate Notification Alert';
+    const content = `
+      <h2 style="margin: 0 0 12px; color: #0f172a; font-size: 20px; font-weight: 700;">${heading} 🔔</h2>
+      <p style="margin: 0 0 14px; color: #475569; font-size: 14px; line-height: 1.6;">Hello <strong>${userName || 'SkillMate Student'}</strong>,</p>
+      
+      <div style="background: #f0f7ff; border-left: 4px solid #2563eb; border-radius: 0 10px 10px 0; padding: 16px 20px; margin: 20px 0;">
+        <p style="margin: 0; color: #1e293b; font-size: 14px; line-height: 1.6; font-weight: 500;">
+          ${messageText}
+        </p>
+      </div>
+
+      <p style="margin: 0; color: #64748b; font-size: 13px; line-height: 1.5;">
+        You received this notification based on your SkillMate activity and email preferences.
+      </p>
+    `;
+
+    const buttonUrl = actionLink && actionLink.startsWith('http')
+      ? actionLink
+      : `http://localhost:5173${actionLink || '/notifications'}`;
+
+    return {
+      subject: `🔔 SkillMate Alert: ${heading}`,
+      category: category || 'Notification',
+      html: baseTemplate(heading, content, { url: buttonUrl, text: 'Open SkillMate' })
     };
   }
 };

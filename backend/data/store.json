@@ -1949,6 +1949,28 @@
       ],
       "status": "assigned",
       "createdAt": "2026-09-25T02:58:24.426Z"
+    },
+    {
+      "id": "pt_1790621114680",
+      "creatorId": "usr_1790321075735",
+      "creatorName": "Hariharan G",
+      "assignedToId": "usr_1790321586518",
+      "assignedToName": "Kiruthika S",
+      "skill": "Java",
+      "title": "Java OOP Classes & Encapsulation",
+      "description": "Solve these 2 fundamental class design challenges.",
+      "difficulty": "Medium",
+      "timeMinutes": 20,
+      "questions": [
+        {
+          "id": "q1",
+          "question": "What keyword restricts direct member access in Java?",
+          "type": "text",
+          "sampleAnswer": "private"
+        }
+      ],
+      "status": "assigned",
+      "createdAt": "2026-09-28T18:45:14.680Z"
     }
   ],
   "sessions": [
@@ -2243,7 +2265,7 @@
       "title": "📅 New Session Scheduled",
       "message": "Hariharan G scheduled a session with you: HTML & CSS Layout Pairing.",
       "type": "session_scheduled",
-      "read": false,
+      "read": true,
       "actionLink": "/sessions",
       "createdAt": "2026-09-25T09:41:32.876Z"
     },
@@ -2256,6 +2278,16 @@
       "read": true,
       "actionLink": "/sessions",
       "createdAt": "2026-09-25T09:41:32.876Z"
+    },
+    {
+      "id": "notif_1790621114680",
+      "userId": "usr_1790321586518",
+      "title": "📝 New Practice Assigned",
+      "message": "Hariharan G sent you a practice challenge: \"Java OOP Classes & Encapsulation\".",
+      "type": "practice_assigned",
+      "read": true,
+      "actionLink": "/practice",
+      "createdAt": "2026-09-28T18:45:14.680Z"
     }
   ],
   "credits": [
@@ -2307,6 +2339,28 @@
   ],
   "badges": [],
   "emailLogs": [
+    {
+      "id": "email_1790621114683_87r0h",
+      "toEmail": "kiruthi8759@gmail.com",
+      "subject": "📝 New SkillMate Practice Assignment: \"Java OOP Classes & Encapsulation\"",
+      "htmlBody": "\n<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"utf-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n  <title>New Practice Assignment Assigned</title>\n</head>\n<body style=\"margin: 0; padding: 0; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;\">\n  <table role=\"presentation\" width=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\" style=\"background-color: #f1f5f9; padding: 32px 12px;\">\n    <tr>\n      <td align=\"center\">\n        <table role=\"presentation\" width=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\" style=\"max-width: 580px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08); border: 1px solid #e2e8f0;\">\n          \n          <!-- Header Banner -->\n          <tr>\n            <td style=\"background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #2563eb 100%); padding: 32px 24px; text-align: center;\">\n              <h1 style=\"margin: 0; color: #ffffff; font-size: 26px; font-weight: 800; letter-spacing: -0.5px;\">SKILLMATE</h1>\n              <p style=\"margin: 6px 0 0; color: #93c5fd; font-size: 13px; font-weight: 500; letter-spacing: 0.5px; text-transform: uppercase;\">Connect Skills • Learn Together</p>\n            </td>\n          </tr>\n\n          <!-- Main Content Body -->\n          <tr>\n            <td style=\"padding: 32px 28px 24px;\">\n              \n      <h2 style=\"margin: 0 0 12px; color: #0f172a; font-size: 20px; font-weight: 700;\">New Assignment from Hariharan G 📝</h2>\n      <p style=\"margin: 0 0 16px; color: #475569; font-size: 14px; line-height: 1.6;\">\n        Your peer <strong>Hariharan G</strong> has assigned you a new peer practice challenge:\n      </p>\n\n      <div style=\"background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; margin: 20px 0;\">\n        <h3 style=\"margin: 0 0 6px; color: #0f172a; font-size: 16px; font-weight: 800;\">Java OOP Classes & Encapsulation</h3>\n        <p style=\"margin: 4px 0 0; color: #64748b; font-size: 13px;\"><strong>Skill:</strong> Java • <strong>Difficulty:</strong> Medium • <strong>Est. Time:</strong> 20 mins</p>\n      </div>\n\n      <p style=\"margin: 0; color: #475569; font-size: 14px; line-height: 1.6;\">\n        Solving this assignment will earn you <strong>+5 Skill Credits</strong> and strengthen your portfolio!\n      </p>\n    \n\n              \n              <div style=\"margin: 28px 0 10px; text-align: center;\">\n                <a href=\"http://localhost:5173/practice\" style=\"background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 10px; font-weight: 700; font-size: 14px; display: inline-block; box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);\">\n                  Start Assignment Now\n                </a>\n              </div>\n              \n            </td>\n          </tr>\n\n          <!-- Footer -->\n          <tr>\n            <td style=\"background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 20px 24px; text-align: center;\">\n              <p style=\"margin: 0; color: #64748b; font-size: 12px; line-height: 1.5;\">\n                SkillMate EdTech Student Network • Peer Skill Sharing Platform<br>\n                This email was triggered automatically. If you did not request this, please ignore.\n              </p>\n            </td>\n          </tr>\n\n        </table>\n      </td>\n    </tr>\n  </table>\n</body>\n</html>\n",
+      "category": "Assignment",
+      "provider": "resend",
+      "status": "preview_logged",
+      "createdAt": "2026-09-28T18:45:14.683Z",
+      "error": "You can only send testing emails to your own email address (hariharangmhk0429@gmail.com). To send emails to other recipients, please verify a domain at resend.com/domains, and change the `from` address to an email using this domain."
+    },
+    {
+      "id": "email_1790620934595_2x3dv",
+      "toEmail": "hariharangmhk0429@gmail.com",
+      "subject": "SkillMate Resend Verified Test",
+      "htmlBody": "<p>Resend API is fully active and exclusive!</p>",
+      "category": "Test",
+      "provider": "resend",
+      "status": "sent",
+      "createdAt": "2026-09-28T18:42:14.595Z",
+      "providerMessageId": "01a0e953-28cf-7053-a665-6e44e64c8c9d"
+    },
     {
       "id": "email_1790329292895_a2h8e",
       "toEmail": "kiruthi8759@gmail.com",

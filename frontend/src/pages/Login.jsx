@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LogIn, UserCheck, Shield, Sparkles, AlertCircle } from 'lucide-react';
+import { LogIn, UserCheck, Sparkles, AlertCircle } from 'lucide-react';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -20,21 +20,6 @@ export default function Login() {
       navigate('/dashboard');
     } catch (err) {
       setError(err.response?.data?.message || 'Invalid email or password.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleQuickLogin = async (demoEmail, demoPassword) => {
-    setEmail(demoEmail);
-    setPassword(demoPassword);
-    setError('');
-    setLoading(true);
-    try {
-      await login(demoEmail, demoPassword);
-      navigate('/dashboard');
-    } catch (err) {
-      setError(err.response?.data?.message || 'Quick login failed.');
     } finally {
       setLoading(false);
     }
@@ -110,56 +95,6 @@ export default function Login() {
             </button>
           </form>
 
-          {/* Demo Users One-Click Sign In */}
-          <div className="pt-4 border-t border-slate-100">
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider text-center mb-3">
-              ⚡ One-Click Hackathon Demo Logins
-            </p>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('swedha@skillmate.edu', 'password123')}
-                className="p-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-800 font-semibold border border-blue-200 text-left transition-colors"
-              >
-                👩 Swedha Jasmine
-                <span className="block text-[10px] font-normal text-blue-600">Full Stack & Python</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('priya@skillmate.edu', 'password123')}
-                className="p-2 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-800 font-semibold border border-purple-200 text-left transition-colors"
-              >
-                👩 Priya
-                <span className="block text-[10px] font-normal text-purple-600">Java & Spring Mentor</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('rahul@skillmate.edu', 'password123')}
-                className="p-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 font-semibold border border-amber-200 text-left transition-colors"
-              >
-                👨 Rahul
-                <span className="block text-[10px] font-normal text-amber-600">UI/UX & Figma Designer</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('meena@skillmate.edu', 'password123')}
-                className="p-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-800 font-semibold border border-rose-200 text-left transition-colors"
-              >
-                👩 Meena
-                <span className="block text-[10px] font-normal text-rose-600">Dance & Music Artist</span>
-              </button>
-            </div>
-            <div className="mt-2">
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('admin@skillmate.edu', 'admin123')}
-                className="w-full p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold border border-slate-300 text-center transition-colors flex items-center justify-center gap-1.5 text-xs"
-              >
-                <Shield className="w-3.5 h-3.5 text-slate-600" />
-                SkillMate Administrator
-              </button>
-            </div>
-          </div>
 
           <div className="text-center text-xs text-slate-600 pt-2">
             Don't have an account yet?{' '}

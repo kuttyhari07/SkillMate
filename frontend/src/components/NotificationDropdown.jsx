@@ -117,6 +117,17 @@ export default function NotificationDropdown() {
               ))
             )}
           </div>
+          
+          <div className="p-2 border-t border-slate-100 bg-slate-50/70 text-center">
+            <Link
+              to="/notifications"
+              onClick={() => setOpen(false)}
+              className="text-xs font-semibold text-blue-600 hover:text-blue-700 inline-flex items-center gap-1.5 py-1 px-3 rounded-lg hover:bg-blue-50 transition-colors"
+            >
+              <span>View all notifications & email alerts</span>
+              <ExternalLink className="w-3 h-3" />
+            </Link>
+          </div>
         </div>
       )}
     </div>
