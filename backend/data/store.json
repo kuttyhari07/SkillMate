@@ -281,7 +281,7 @@
           "level": "Beginner"
         }
       ],
-      "skillCredits": 120,
+      "skillCredits": 140,
       "learningHours": 0,
       "teachingHours": 1,
       "averageRating": 5,
@@ -320,7 +320,7 @@
           "level": "Beginner"
         }
       ],
-      "skillCredits": 80,
+      "skillCredits": 90,
       "learningHours": 1,
       "teachingHours": 0,
       "averageRating": 5,
@@ -1993,8 +1993,50 @@
           "sampleAnswer": "private"
         }
       ],
-      "status": "assigned",
-      "createdAt": "2026-09-28T18:45:14.680Z"
+      "status": "reviewed",
+      "createdAt": "2026-09-28T18:45:14.680Z",
+      "submission": {
+        "answers": {
+          "solution": "jdhsfbjsfj"
+        },
+        "submittedAt": "2026-09-30T15:28:36.389Z",
+        "score": 5,
+        "totalQuestions": 5,
+        "feedback": "Great work, clean structure!",
+        "reviewedAt": "2026-09-30T15:29:53.637Z"
+      }
+    },
+    {
+      "id": "pt_1790782069174",
+      "creatorId": "usr_1790321075735",
+      "creatorName": "Hariharan G",
+      "assignedToId": "usr_1790321586518",
+      "assignedToName": "Kiruthika S",
+      "skill": "Java",
+      "title": "Java OOP Classes & Encapsulation",
+      "description": "Solve these 2 fundamental class design challenges.",
+      "difficulty": "Hard",
+      "timeMinutes": 20,
+      "questions": [
+        {
+          "id": "q1",
+          "question": "What keyword restricts direct member access in Java?",
+          "type": "text",
+          "sampleAnswer": "private"
+        }
+      ],
+      "status": "reviewed",
+      "createdAt": "2026-09-30T15:27:49.174Z",
+      "submission": {
+        "answers": {
+          "solution": "nnakfdlf"
+        },
+        "submittedAt": "2026-09-30T15:28:24.121Z",
+        "score": 5,
+        "totalQuestions": 5,
+        "feedback": "Great work, clean structure!",
+        "reviewedAt": "2026-09-30T15:30:13.811Z"
+      }
     }
   ],
   "sessions": [
@@ -2984,9 +3026,59 @@
       "title": "💬 New Message",
       "message": "Hariharan G: \"Hii\"",
       "type": "dm",
-      "read": false,
+      "read": true,
       "actionLink": "/messages?partnerId=usr_1790321075735",
       "createdAt": "2026-09-30T14:49:18.691Z"
+    },
+    {
+      "id": "notif_1790782069174",
+      "userId": "usr_1790321586518",
+      "title": "📝 New Practice Assigned",
+      "message": "Hariharan G sent you a practice challenge: \"Java OOP Classes & Encapsulation\".",
+      "type": "practice_assigned",
+      "read": true,
+      "actionLink": "/practice",
+      "createdAt": "2026-09-30T15:27:49.174Z"
+    },
+    {
+      "id": "notif_1790782104121",
+      "userId": "usr_1790321075735",
+      "title": "✅ Practice Submitted",
+      "message": "Kiruthika S submitted their answers for \"Java OOP Classes & Encapsulation\".",
+      "type": "practice_completed",
+      "read": true,
+      "actionLink": "/practice",
+      "createdAt": "2026-09-30T15:28:24.121Z"
+    },
+    {
+      "id": "notif_1790782116389",
+      "userId": "usr_1790321075735",
+      "title": "✅ Practice Submitted",
+      "message": "Kiruthika S submitted their answers for \"Java OOP Classes & Encapsulation\".",
+      "type": "practice_completed",
+      "read": true,
+      "actionLink": "/practice",
+      "createdAt": "2026-09-30T15:28:36.389Z"
+    },
+    {
+      "id": "notif_1790782193637",
+      "userId": "usr_1790321586518",
+      "title": "🌟 Practice Reviewed",
+      "message": "Hariharan G reviewed your submission for \"Java OOP Classes & Encapsulation\": Score 5/5.",
+      "type": "practice_completed",
+      "read": false,
+      "actionLink": "/practice",
+      "createdAt": "2026-09-30T15:29:53.637Z"
+    },
+    {
+      "id": "notif_1790782213811",
+      "userId": "usr_1790321586518",
+      "title": "🌟 Practice Reviewed",
+      "message": "Hariharan G reviewed your submission for \"Java OOP Classes & Encapsulation\": Score 5/5.",
+      "type": "practice_completed",
+      "read": false,
+      "actionLink": "/practice",
+      "createdAt": "2026-09-30T15:30:13.811Z"
     }
   ],
   "credits": [
@@ -3052,10 +3144,79 @@
       "description": "📚 Attended peer learning session: HTML & CSS Layout Pairing",
       "balanceAfter": 80,
       "createdAt": "2026-09-30T13:08:57.592Z"
+    },
+    {
+      "id": "tx_1790782104121",
+      "userId": "usr_1790321586518",
+      "amount": 5,
+      "type": "peer_session",
+      "description": "🎯 Submitted Peer Practice: Java OOP Classes & Encapsulation",
+      "balanceAfter": 85,
+      "createdAt": "2026-09-30T15:28:24.121Z"
+    },
+    {
+      "id": "tx_1790782116389",
+      "userId": "usr_1790321586518",
+      "amount": 5,
+      "type": "peer_session",
+      "description": "🎯 Submitted Peer Practice: Java OOP Classes & Encapsulation",
+      "balanceAfter": 90,
+      "createdAt": "2026-09-30T15:28:36.389Z"
+    },
+    {
+      "id": "tx_1790782193637",
+      "userId": "usr_1790321075735",
+      "amount": 10,
+      "type": "practice_review",
+      "description": "⭐ Reviewed Peer Challenge: Java OOP Classes & Encapsulation",
+      "balanceAfter": 130,
+      "createdAt": "2026-09-30T15:29:53.637Z"
+    },
+    {
+      "id": "tx_1790782213811",
+      "userId": "usr_1790321075735",
+      "amount": 10,
+      "type": "practice_review",
+      "description": "⭐ Reviewed Peer Challenge: Java OOP Classes & Encapsulation",
+      "balanceAfter": 140,
+      "createdAt": "2026-09-30T15:30:13.811Z"
     }
   ],
   "badges": [],
   "emailLogs": [
+    {
+      "id": "email_1790782116408_1rrdp",
+      "toEmail": "hariharangmhk0429@gmail.com",
+      "subject": "✅ Practice Assignment Submitted by Kiruthika S",
+      "htmlBody": "\n<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"utf-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n  <title>Practice Assignment Submitted</title>\n</head>\n<body style=\"margin: 0; padding: 0; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;\">\n  <table role=\"presentation\" width=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\" style=\"background-color: #f1f5f9; padding: 32px 12px;\">\n    <tr>\n      <td align=\"center\">\n        <table role=\"presentation\" width=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\" style=\"max-width: 580px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08); border: 1px solid #e2e8f0;\">\n          \n          <!-- Header Banner -->\n          <tr>\n            <td style=\"background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #2563eb 100%); padding: 32px 24px; text-align: center;\">\n              <h1 style=\"margin: 0; color: #ffffff; font-size: 26px; font-weight: 800; letter-spacing: -0.5px;\">SKILLMATE</h1>\n              <p style=\"margin: 6px 0 0; color: #93c5fd; font-size: 13px; font-weight: 500; letter-spacing: 0.5px; text-transform: uppercase;\">Connect Skills • Learn Together</p>\n            </td>\n          </tr>\n\n          <!-- Main Content Body -->\n          <tr>\n            <td style=\"padding: 32px 28px 24px;\">\n              \n      <h2 style=\"margin: 0 0 12px; color: #0f172a; font-size: 20px; font-weight: 700;\">Assignment Completed! ✅</h2>\n      <p style=\"margin: 0 0 16px; color: #475569; font-size: 14px; line-height: 1.6;\">\n        <strong>Kiruthika S</strong> has submitted their answers for the challenge: <strong>\"Java OOP Classes & Encapsulation\"</strong>.\n      </p>\n      <p style=\"margin: 0; color: #475569; font-size: 14px; line-height: 1.6;\">\n        Head over to Peer Practice to review their answers and provide feedback.\n      </p>\n    \n\n              \n              <div style=\"margin: 28px 0 10px; text-align: center;\">\n                <a href=\"http://localhost:5173/practice\" style=\"background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 10px; font-weight: 700; font-size: 14px; display: inline-block; box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);\">\n                  Review Submission\n                </a>\n              </div>\n              \n            </td>\n          </tr>\n\n          <!-- Footer -->\n          <tr>\n            <td style=\"background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 20px 24px; text-align: center;\">\n              <p style=\"margin: 0; color: #64748b; font-size: 12px; line-height: 1.5;\">\n                SkillMate EdTech Student Network • Peer Skill Sharing Platform<br>\n                This email was triggered automatically. If you did not request this, please ignore.\n              </p>\n            </td>\n          </tr>\n\n        </table>\n      </td>\n    </tr>\n  </table>\n</body>\n</html>\n",
+      "category": "Assignment",
+      "provider": "brevo",
+      "status": "sent",
+      "createdAt": "2026-09-30T15:28:36.408Z",
+      "providerMessageId": "<202609301528.22664463426@smtp-relay.mailin.fr>"
+    },
+    {
+      "id": "email_1790782104129_847ya",
+      "toEmail": "hariharangmhk0429@gmail.com",
+      "subject": "✅ Practice Assignment Submitted by Kiruthika S",
+      "htmlBody": "\n<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"utf-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n  <title>Practice Assignment Submitted</title>\n</head>\n<body style=\"margin: 0; padding: 0; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;\">\n  <table role=\"presentation\" width=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\" style=\"background-color: #f1f5f9; padding: 32px 12px;\">\n    <tr>\n      <td align=\"center\">\n        <table role=\"presentation\" width=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\" style=\"max-width: 580px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08); border: 1px solid #e2e8f0;\">\n          \n          <!-- Header Banner -->\n          <tr>\n            <td style=\"background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #2563eb 100%); padding: 32px 24px; text-align: center;\">\n              <h1 style=\"margin: 0; color: #ffffff; font-size: 26px; font-weight: 800; letter-spacing: -0.5px;\">SKILLMATE</h1>\n              <p style=\"margin: 6px 0 0; color: #93c5fd; font-size: 13px; font-weight: 500; letter-spacing: 0.5px; text-transform: uppercase;\">Connect Skills • Learn Together</p>\n            </td>\n          </tr>\n\n          <!-- Main Content Body -->\n          <tr>\n            <td style=\"padding: 32px 28px 24px;\">\n              \n      <h2 style=\"margin: 0 0 12px; color: #0f172a; font-size: 20px; font-weight: 700;\">Assignment Completed! ✅</h2>\n      <p style=\"margin: 0 0 16px; color: #475569; font-size: 14px; line-height: 1.6;\">\n        <strong>Kiruthika S</strong> has submitted their answers for the challenge: <strong>\"Java OOP Classes & Encapsulation\"</strong>.\n      </p>\n      <p style=\"margin: 0; color: #475569; font-size: 14px; line-height: 1.6;\">\n        Head over to Peer Practice to review their answers and provide feedback.\n      </p>\n    \n\n              \n              <div style=\"margin: 28px 0 10px; text-align: center;\">\n                <a href=\"http://localhost:5173/practice\" style=\"background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 10px; font-weight: 700; font-size: 14px; display: inline-block; box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);\">\n                  Review Submission\n                </a>\n              </div>\n              \n            </td>\n          </tr>\n\n          <!-- Footer -->\n          <tr>\n            <td style=\"background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 20px 24px; text-align: center;\">\n              <p style=\"margin: 0; color: #64748b; font-size: 12px; line-height: 1.5;\">\n                SkillMate EdTech Student Network • Peer Skill Sharing Platform<br>\n                This email was triggered automatically. If you did not request this, please ignore.\n              </p>\n            </td>\n          </tr>\n\n        </table>\n      </td>\n    </tr>\n  </table>\n</body>\n</html>\n",
+      "category": "Assignment",
+      "provider": "brevo",
+      "status": "sent",
+      "createdAt": "2026-09-30T15:28:24.129Z",
+      "providerMessageId": "<202609301528.33465552754@smtp-relay.mailin.fr>"
+    },
+    {
+      "id": "email_1790782069188_qasxz",
+      "toEmail": "kiruthi8759@gmail.com",
+      "subject": "📝 New SkillMate Practice Assignment: \"Java OOP Classes & Encapsulation\"",
+      "htmlBody": "\n<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"utf-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n  <title>New Practice Assignment Assigned</title>\n</head>\n<body style=\"margin: 0; padding: 0; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;\">\n  <table role=\"presentation\" width=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\" style=\"background-color: #f1f5f9; padding: 32px 12px;\">\n    <tr>\n      <td align=\"center\">\n        <table role=\"presentation\" width=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\" style=\"max-width: 580px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08); border: 1px solid #e2e8f0;\">\n          \n          <!-- Header Banner -->\n          <tr>\n            <td style=\"background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #2563eb 100%); padding: 32px 24px; text-align: center;\">\n              <h1 style=\"margin: 0; color: #ffffff; font-size: 26px; font-weight: 800; letter-spacing: -0.5px;\">SKILLMATE</h1>\n              <p style=\"margin: 6px 0 0; color: #93c5fd; font-size: 13px; font-weight: 500; letter-spacing: 0.5px; text-transform: uppercase;\">Connect Skills • Learn Together</p>\n            </td>\n          </tr>\n\n          <!-- Main Content Body -->\n          <tr>\n            <td style=\"padding: 32px 28px 24px;\">\n              \n      <h2 style=\"margin: 0 0 12px; color: #0f172a; font-size: 20px; font-weight: 700;\">New Assignment from Hariharan G 📝</h2>\n      <p style=\"margin: 0 0 16px; color: #475569; font-size: 14px; line-height: 1.6;\">\n        Your peer <strong>Hariharan G</strong> has assigned you a new peer practice challenge:\n      </p>\n\n      <div style=\"background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; margin: 20px 0;\">\n        <h3 style=\"margin: 0 0 6px; color: #0f172a; font-size: 16px; font-weight: 800;\">Java OOP Classes & Encapsulation</h3>\n        <p style=\"margin: 4px 0 0; color: #64748b; font-size: 13px;\"><strong>Skill:</strong> Java • <strong>Difficulty:</strong> Hard • <strong>Est. Time:</strong> 20 mins</p>\n      </div>\n\n      <p style=\"margin: 0; color: #475569; font-size: 14px; line-height: 1.6;\">\n        Solving this assignment will earn you <strong>+5 Skill Credits</strong> and strengthen your portfolio!\n      </p>\n    \n\n              \n              <div style=\"margin: 28px 0 10px; text-align: center;\">\n                <a href=\"http://localhost:5173/practice\" style=\"background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 10px; font-weight: 700; font-size: 14px; display: inline-block; box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);\">\n                  Start Assignment Now\n                </a>\n              </div>\n              \n            </td>\n          </tr>\n\n          <!-- Footer -->\n          <tr>\n            <td style=\"background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 20px 24px; text-align: center;\">\n              <p style=\"margin: 0; color: #64748b; font-size: 12px; line-height: 1.5;\">\n                SkillMate EdTech Student Network • Peer Skill Sharing Platform<br>\n                This email was triggered automatically. If you did not request this, please ignore.\n              </p>\n            </td>\n          </tr>\n\n        </table>\n      </td>\n    </tr>\n  </table>\n</body>\n</html>\n",
+      "category": "Assignment",
+      "provider": "brevo",
+      "status": "sent",
+      "createdAt": "2026-09-30T15:27:49.188Z",
+      "providerMessageId": "<202609301527.10241544930@smtp-relay.mailin.fr>"
+    },
     {
       "id": "email_1790779758697_cfskk",
       "toEmail": "kiruthi8759@gmail.com",

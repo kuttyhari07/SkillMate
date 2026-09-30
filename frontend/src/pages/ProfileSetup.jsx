@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/client';
@@ -10,7 +10,11 @@ import {
   BookOpen,
   GraduationCap,
   Clock,
-  Laptop
+  Laptop,
+  Camera,
+  Upload,
+  Check,
+  RefreshCw
 } from 'lucide-react';
 
 export default function ProfileSetup() {
@@ -27,6 +31,37 @@ export default function ProfileSetup() {
   const [availability, setAvailability] = useState(user?.availability || 'Weekdays 6:00 PM - 9:00 PM, Weekends');
   const [learningMode, setLearningMode] = useState(user?.learningMode || 'Peer');
   const [loading, setLoading] = useState(false);
+  const [photoPreview, setPhotoPreview] = useState(user?.avatar || '');
+  const [photoChanged, setPhotoChanged] = useState(false);
+  const fileInputRef = useRef(null);
+
+  const handlePhotoSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Please select a valid image file (PNG, JPG, JPEG, WEBP).');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Photo is too large! Please choose an image smaller than 5MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setPhotoPreview(reader.result);
+      setPhotoChanged(true);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleResetPhoto = () => {
+    const defaultAvatar = `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(user?.name || 'student')}`;
+    setPhotoPreview(defaultAvatar);
+    setPhotoChanged(true);
+  };
 
   const availableCatalog = [
     'HTML', 'CSS', 'JavaScript', 'React', 'Python', 'Java', 'SQL / Database',
@@ -53,6 +88,9 @@ export default function ProfileSetup() {
     e.preventDefault();
     setLoading(true);
     try {
+      if (photoChanged && photoPreview) {
+        await api.post('/users/upload-avatar', { image: photoPreview });
+      }
       await api.put('/users/me', {
         skillsToTeach,
         skillsToLearn,
@@ -86,6 +124,70 @@ export default function ProfileSetup() {
         </div>
 
         <form onSubmit={handleSubmit} className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-md space-y-8">
+          {/* Section: Profile Picture Upload */}
+          <div className="p-4 sm:p-6 rounded-2xl bg-gradient-to-r from-blue-50/60 to-indigo-50/40 border border-blue-100 flex flex-col sm:flex-row items-center gap-5">
+            <div className="relative group shrink-0">
+              <img
+                src={photoPreview || user?.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(user?.name || 'student')}`}
+                alt="Profile Preview"
+                className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover border-2 border-white shadow-md transition-all group-hover:brightness-90"
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="absolute inset-0 rounded-2xl bg-black/40 text-white flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-xs cursor-pointer"
+                title="Change Photo"
+              >
+                <Camera className="w-5 h-5 drop-shadow" />
+                <span className="text-[9px] font-bold mt-1 uppercase drop-shadow">Change</span>
+              </button>
+            </div>
+
+            <div className="flex-1 text-center sm:text-left space-y-2">
+              <div>
+                <h3 className="font-extrabold text-slate-900 text-sm flex items-center justify-center sm:justify-start gap-1.5">
+                  <Camera className="w-4 h-4 text-blue-600" /> Profile Photo
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Upload your own photo so other students and study partners can easily recognize you.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5 pt-1">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  accept="image/*"
+                  onChange={handlePhotoSelect}
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer active:scale-95"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>{photoChanged ? 'Select Different Photo' : 'Upload Your Photo'}</span>
+                </button>
+
+                {photoChanged && (
+                  <button
+                    type="button"
+                    onClick={handleResetPhoto}
+                    className="px-3 py-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-600 text-xs font-semibold rounded-xl transition-colors cursor-pointer"
+                  >
+                    Reset to Default
+                  </button>
+                )}
+
+                {photoChanged && (
+                  <span className="text-xs text-emerald-600 font-bold flex items-center gap-1">
+                    <Check className="w-3.5 h-3.5" /> Photo selected (will save on submit)
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
           {/* Section: Skills I Can Teach */}
           <div>
             <div className="flex items-center justify-between mb-3">

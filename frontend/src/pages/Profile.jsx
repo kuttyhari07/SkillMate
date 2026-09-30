@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/client';
@@ -13,16 +13,25 @@ import {
   MessageSquare,
   Sparkles,
   MapPin,
-  Languages
+  Languages,
+  Camera,
+  Upload,
+  Check,
+  X,
+  RefreshCw
 } from 'lucide-react';
 
 export default function Profile() {
   const { id } = useParams();
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, refreshUser } = useAuth();
   const targetId = id || currentUser?.id || 'usr_swedha';
 
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [pendingPhoto, setPendingPhoto] = useState(null);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -37,6 +46,70 @@ export default function Profile() {
     };
     fetchProfile();
   }, [targetId]);
+
+  const handlePhotoSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file (PNG, JPG, JPEG, WEBP).');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Photo is too large! Please choose an image smaller than 5MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setPendingPhoto(reader.result);
+      setShowConfirmModal(true);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  const handleConfirmUpload = async () => {
+    if (!pendingPhoto) return;
+    setUploadingPhoto(true);
+    try {
+      const res = await api.post('/users/upload-avatar', { image: pendingPhoto });
+      await refreshUser();
+      setProfileData((prev) => (prev ? {
+        ...prev,
+        user: { ...prev.user, avatar: res.data.avatar }
+      } : prev));
+      setShowConfirmModal(false);
+      setPendingPhoto(null);
+      alert('🎉 Profile photo updated successfully!');
+    } catch (err) {
+      alert('Failed to upload photo: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
+  const handleResetToDefault = async () => {
+    if (!window.confirm('Reset your profile photo back to the default avatar?')) return;
+    setUploadingPhoto(true);
+    try {
+      const defaultAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.name)}`;
+      const res = await api.post('/users/upload-avatar', { image: defaultAvatar });
+      await refreshUser();
+      setProfileData((prev) => (prev ? {
+        ...prev,
+        user: { ...prev.user, avatar: res.data.avatar }
+      } : prev));
+      setShowConfirmModal(false);
+      setPendingPhoto(null);
+      alert('Profile photo reset to default avatar.');
+    } catch (err) {
+      alert('Failed to reset avatar: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
 
   if (loading) {
     return <div className="min-h-screen bg-slate-50 flex items-center justify-center p-8 text-xs text-slate-500">Loading student profile...</div>;
@@ -58,11 +131,41 @@ export default function Profile() {
         {/* Profile Card Header */}
         <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="flex items-center gap-5">
-            <img
-              src={user.avatar}
-              alt={user.name}
-              className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl object-cover border-2 border-slate-200 shadow-md"
-            />
+            <div className="relative group shrink-0">
+              <img
+                src={user.avatar}
+                alt={user.name}
+                className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl object-cover border-2 border-slate-200 shadow-md transition-all group-hover:brightness-90"
+              />
+              {isMe && (
+                <>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    accept="image/*"
+                    onChange={handlePhotoSelect}
+                    className="hidden"
+                  />
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    type="button"
+                    title="Change profile picture"
+                    className="absolute inset-0 rounded-3xl bg-black/40 text-white flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-xs cursor-pointer"
+                  >
+                    <Camera className="w-5 h-5 sm:w-6 sm:h-6 drop-shadow" />
+                    <span className="text-[10px] font-bold mt-1 tracking-wide uppercase drop-shadow">Change</span>
+                  </button>
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    type="button"
+                    title="Change photo"
+                    className="sm:hidden absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-lg border-2 border-white cursor-pointer active:scale-95"
+                  >
+                    <Camera className="w-4 h-4" />
+                  </button>
+                </>
+              )}
+            </div>
             <div className="space-y-1">
               <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
                 {user.name}
@@ -105,12 +208,22 @@ export default function Profile() {
               </>
             )}
             {isMe && (
-              <Link
-                to="/profile-setup"
-                className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold transition-colors"
-              >
-                Edit Profile
-              </Link>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="px-4 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl text-xs font-bold transition-all border border-blue-200/60 flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
+                >
+                  <Camera className="w-4 h-4 text-blue-600" />
+                  <span>Change Photo</span>
+                </button>
+                <Link
+                  to="/profile-setup"
+                  className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold transition-colors"
+                >
+                  Edit Profile
+                </Link>
+              </div>
             )}
           </div>
         </div>
@@ -221,6 +334,100 @@ export default function Profile() {
             )}
           </div>
         </div>
+
+        {/* Photo Upload / Change Modal */}
+        {showConfirmModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+            <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-5">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2 text-slate-900 font-extrabold text-base">
+                  <Camera className="w-5 h-5 text-blue-600" />
+                  <span>Update Profile Photo</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowConfirmModal(false);
+                    setPendingPhoto(null);
+                  }}
+                  className="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="flex flex-col items-center justify-center py-2 space-y-3">
+                <div className="relative">
+                  <img
+                    src={pendingPhoto || user.avatar}
+                    alt="Preview"
+                    className="w-32 h-32 rounded-3xl object-cover border-4 border-blue-500 shadow-xl"
+                  />
+                  <div className="absolute -bottom-2 -right-2 bg-blue-600 text-white rounded-full p-2 shadow-md">
+                    <Upload className="w-4 h-4" />
+                  </div>
+                </div>
+                <p className="text-xs text-slate-500 text-center max-w-xs">
+                  Looks great! Click save below to update your profile photo across SkillMate.
+                </p>
+              </div>
+
+              <div className="space-y-2 pt-2">
+                <button
+                  type="button"
+                  onClick={handleConfirmUpload}
+                  disabled={uploadingPhoto}
+                  className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+                >
+                  {uploadingPhoto ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      <span>Uploading & Saving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4" />
+                      <span>Save as Profile Photo</span>
+                    </>
+                  )}
+                </button>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadingPhoto}
+                    className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-colors cursor-pointer"
+                  >
+                    Choose Different Photo
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowConfirmModal(false);
+                      setPendingPhoto(null);
+                    }}
+                    disabled={uploadingPhoto}
+                    className="px-4 py-2.5 border border-slate-200 hover:bg-slate-50 text-slate-500 font-semibold text-xs rounded-xl transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                </div>
+
+                <div className="pt-3 border-t border-slate-100 text-center">
+                  <button
+                    type="button"
+                    onClick={handleResetToDefault}
+                    disabled={uploadingPhoto}
+                    className="text-[11px] text-slate-400 hover:text-red-500 font-semibold transition-colors underline cursor-pointer"
+                  >
+                    Reset to default generated avatar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

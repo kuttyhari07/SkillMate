@@ -1,8 +1,53 @@
 import express from 'express';
 import { getStore, saveStore } from '../config/store.js';
 import { authMiddleware } from '../middleware/auth.js';
+import { uploadImage } from '../services/cloudinaryService.js';
 
 const router = express.Router();
+
+// Upload / Update Profile Photo (Avatar)
+router.post('/upload-avatar', authMiddleware, async (req, res) => {
+  try {
+    const { image } = req.body;
+    if (!image) {
+      return res.status(400).json({ message: 'No image data provided.' });
+    }
+
+    const uploadRes = await uploadImage(image, {
+      folder: 'skillmate_avatars'
+    });
+
+    const store = getStore();
+    const userIndex = store.users.findIndex(u => u.id === req.user.id);
+    if (userIndex === -1) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    const newAvatarUrl = uploadRes.url;
+    store.users[userIndex].avatar = newAvatarUrl;
+
+    // Update avatar across their session records
+    if (Array.isArray(store.sessions)) {
+      store.sessions.forEach(sess => {
+        if (sess.mentorId === req.user.id) sess.mentorAvatar = newAvatarUrl;
+        if (sess.learnerId === req.user.id) sess.learnerAvatar = newAvatarUrl;
+      });
+    }
+
+    saveStore();
+
+    const { password: _, ...userSafe } = store.users[userIndex];
+    res.json({
+      message: 'Profile photo updated successfully!',
+      avatar: newAvatarUrl,
+      user: userSafe,
+      provider: uploadRes.provider
+    });
+  } catch (err) {
+    console.error('Error uploading avatar:', err);
+    res.status(500).json({ message: 'Error uploading avatar', error: err.message });
+  }
+});
 
 // Get My Profile
 router.get('/me', authMiddleware, (req, res) => {
