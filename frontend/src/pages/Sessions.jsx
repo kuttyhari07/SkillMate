@@ -14,6 +14,7 @@ import {
   Users,
   BrainCircuit,
   ArrowRight,
+  ExternalLink,
   X
 } from 'lucide-react';
 
@@ -38,7 +39,8 @@ export default function Sessions() {
     time: '19:00',
     durationMinutes: 60,
     mode: 'online',
-    role: 'mentor'
+    role: 'mentor',
+    meetingLink: ''
   });
 
   // Rating form state
@@ -223,19 +225,32 @@ export default function Sessions() {
 
                   {/* Action Buttons */}
                   <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100">
-                    <span className="text-xs text-slate-500 flex items-center gap-1.5">
-                      <Video className="w-4 h-4 text-blue-600" />
-                      {sess.isDemoMeeting ? 'SkillMate Demo Online Room' : 'Google Meet'}
+                    <span className="text-xs text-slate-500 flex items-center gap-1.5 font-medium">
+                      <Video className="w-4 h-4 text-emerald-600" />
+                      {sess.meetingLink?.includes('meet.google.com') ? 'Google Meet Call' : (sess.isDemoMeeting ? 'SkillMate Demo Room' : 'Live Online Room')}
                     </span>
 
                     <div className="flex items-center gap-2">
                       {!isCompleted && sess.meetingLink && (
-                        <Link
-                          to={sess.meetingLink.replace('http://localhost:5173', '')}
-                          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-xs transition-colors"
-                        >
-                          Join Online Room
-                        </Link>
+                        sess.meetingLink.startsWith('http') ? (
+                          <a
+                            href={sess.meetingLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl text-xs font-bold shadow-xs transition-all flex items-center gap-1.5"
+                          >
+                            <Video className="w-3.5 h-3.5" />
+                            {sess.meetingLink.includes('meet.google.com') ? 'Join Google Meet' : 'Join Online Room'}
+                          </a>
+                        ) : (
+                          <Link
+                            to={sess.meetingLink}
+                            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-xs transition-colors flex items-center gap-1.5"
+                          >
+                            <Video className="w-3.5 h-3.5" />
+                            Join Online Room
+                          </Link>
+                        )
                       )}
 
                       {!isCompleted && (
@@ -355,11 +370,40 @@ export default function Sessions() {
                   </div>
                 </div>
 
+                {/* Google Meet Link Field */}
+                <div className="p-3.5 bg-blue-50/60 rounded-2xl border border-blue-100 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-slate-800 uppercase flex items-center gap-1.5">
+                      <Video className="w-3.5 h-3.5 text-emerald-600" />
+                      Google Meet Link <span className="text-slate-500 font-normal lowercase">(auto-created if empty)</span>
+                    </label>
+                    <a
+                      href="https://meet.google.com/new"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[11px] text-emerald-700 hover:text-emerald-800 font-semibold flex items-center gap-1 hover:underline"
+                    >
+                      <ExternalLink className="w-3 h-3" /> Create on Google Meet
+                    </a>
+                  </div>
+                  <input
+                    type="url"
+                    placeholder="https://meet.google.com/xxx-yyyy-zzz (leave empty to auto-generate)"
+                    value={newSession.meetingLink}
+                    onChange={(e) => setNewSession({ ...newSession, meetingLink: e.target.value })}
+                    className="w-full p-2.5 rounded-xl border border-slate-300 text-xs text-slate-900 bg-white placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  />
+                  <p className="text-[11px] text-slate-600 leading-tight">
+                    ✨ When scheduled, Google Meet link will automatically be generated and emailed directly to your SkillMate partner via Brevo!
+                  </p>
+                </div>
+
                 <button
                   type="submit"
-                  className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md transition-colors"
+                  className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold shadow-md transition-all flex items-center justify-center gap-2"
                 >
-                  Confirm & Generate Meeting Link
+                  <Sparkles className="w-4 h-4" />
+                  Confirm & Schedule Google Meet Session
                 </button>
               </form>
             </div>

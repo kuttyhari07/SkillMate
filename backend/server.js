@@ -105,11 +105,17 @@ io.on('connection', (socket) => {
 
   // Real-time message exchange
   socket.on('send_message', async (data) => {
-    const { senderId, receiverId, content } = data;
+    const { senderId, receiverId, content, id } = data;
     const store = getStore();
 
-    const newMessage = {
-      id: 'msg_' + Date.now(),
+    // Check if this message was already recorded via REST API in the last 5 seconds
+    const existing = store.messages.find(m => 
+      (id && m.id === id) || 
+      (m.senderId === senderId && m.receiverId === receiverId && m.content === content && (Date.now() - new Date(m.createdAt).getTime()) < 5000)
+    );
+
+    const messageToBroadcast = existing || {
+      id: id || ('msg_' + Date.now()),
       senderId,
       receiverId,
       content,
@@ -117,47 +123,51 @@ io.on('connection', (socket) => {
       createdAt: new Date().toISOString()
     };
 
-    store.messages.push(newMessage);
+    if (!existing) {
+      store.messages.push(messageToBroadcast);
 
-    const sender = store.users.find(u => u.id === senderId);
-    const receiver = store.users.find(u => u.id === receiverId);
+      const sender = store.users.find(u => u.id === senderId);
+      const receiver = store.users.find(u => u.id === receiverId);
 
-    store.notifications.push({
-      id: 'notif_' + Date.now(),
-      userId: receiverId,
-      title: '💬 New Message',
-      message: `${sender?.name || 'SkillMate User'}: "${content.substring(0, 40)}${content.length > 40 ? '...' : ''}"`,
-      type: 'dm',
-      read: false,
-      actionLink: `/messages?partner=${senderId}`,
-      createdAt: new Date().toISOString()
-    });
+      store.notifications.push({
+        id: 'notif_' + Date.now(),
+        userId: receiverId,
+        title: '💬 New Message',
+        message: `${sender?.name || 'SkillMate User'}: "${content.substring(0, 40)}${content.length > 40 ? '...' : ''}"`,
+        type: 'dm',
+        read: false,
+        actionLink: `/messages?partnerId=${senderId}`,
+        createdAt: new Date().toISOString()
+      });
 
-    saveStore();
+      saveStore();
 
-    // Send email notification to recipient
-    if (receiver?.email) {
-      try {
-        const template = emailTemplates.newMessage(sender?.name || 'A SkillMate peer', content);
-        await sendEmail({
-          to: receiver.email,
-          subject: template.subject,
-          html: template.html,
-          category: template.category
-        });
-      } catch (mailErr) {
-        console.warn('[Socket Message Email Warning]:', mailErr.message);
+      // Send email notification to recipient
+      if (receiver?.email) {
+        try {
+          const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+          const replyLink = `${frontendUrl}/messages?partnerId=${senderId}`;
+          const template = emailTemplates.newMessage(sender?.name || 'A SkillMate peer', content, replyLink);
+          await sendEmail({
+            to: receiver.email,
+            subject: template.subject,
+            html: template.html,
+            category: template.category
+          });
+        } catch (mailErr) {
+          console.warn('[Socket Message Email Warning]:', mailErr.message);
+        }
       }
     }
 
     // Broadcast to room
     const room = [senderId, receiverId].sort().join('_');
-    io.to(room).emit('receive_message', newMessage);
+    io.to(room).emit('receive_message', messageToBroadcast);
 
     // If receiver is connected elsewhere, notify them directly
     const recipientSocket = onlineUsers.get(receiverId);
     if (recipientSocket) {
-      io.to(recipientSocket).emit('new_incoming_message', newMessage);
+      io.to(recipientSocket).emit('new_incoming_message', messageToBroadcast);
     }
   });
 

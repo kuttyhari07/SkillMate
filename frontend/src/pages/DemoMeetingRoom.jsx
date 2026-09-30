@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -15,7 +15,8 @@ import {
   Edit3,
   Clock,
   CheckCircle2,
-  BrainCircuit
+  BrainCircuit,
+  ExternalLink
 } from 'lucide-react';
 
 export default function DemoMeetingRoom() {
@@ -35,9 +36,55 @@ export default function DemoMeetingRoom() {
   ]);
   const [chatInput, setChatInput] = useState('');
 
+  // Real webcam video ref & state
+  const videoRef = useRef(null);
+  const [stream, setStream] = useState(null);
+  const [cameraActive, setCameraActive] = useState(false);
+
+  useEffect(() => {
+    let currentStream = null;
+    if (videoOn) {
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+          .then((s) => {
+            currentStream = s;
+            setStream(s);
+            setCameraActive(true);
+            if (videoRef.current) {
+              videoRef.current.srcObject = s;
+            }
+          })
+          .catch((err) => {
+            console.log('Webcam not accessible or permission denied, using placeholder:', err);
+            setCameraActive(false);
+          });
+      }
+    } else {
+      if (stream) {
+        stream.getTracks().forEach((track) => track.stop());
+        setStream(null);
+        setCameraActive(false);
+      }
+    }
+
+    return () => {
+      if (currentStream) {
+        currentStream.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, [videoOn]);
+
+  useEffect(() => {
+    if (stream) {
+      stream.getAudioTracks().forEach((track) => {
+        track.enabled = micOn;
+      });
+    }
+  }, [micOn, stream]);
+
   useEffect(() => {
     const timer = setInterval(() => {
-      setSessionSeconds(s => s + 1);
+      setSessionSeconds((s) => s + 1);
     }, 1000);
     return () => clearInterval(timer);
   }, []);
@@ -74,11 +121,23 @@ export default function DemoMeetingRoom() {
           </h2>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-800 text-xs font-mono text-slate-300">
             <Clock className="w-3.5 h-3.5 text-blue-400" />
             <span>{formatTimer(sessionSeconds)}</span>
           </div>
+
+          <a
+            href={roomId?.startsWith('http') ? roomId : `https://meet.google.com/new`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-3.5 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
+          >
+            <Video className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Launch in Google Meet</span>
+            <span className="sm:hidden">Meet</span>
+            <ExternalLink className="w-3 h-3" />
+          </a>
 
           <button
             onClick={handleEndSession}
@@ -110,7 +169,15 @@ export default function DemoMeetingRoom() {
 
             {/* Participant 2: Self User */}
             <div className="relative aspect-video bg-slate-900 rounded-3xl border border-slate-800 overflow-hidden flex items-center justify-center shadow-lg">
-              {videoOn ? (
+              {videoOn && cameraActive ? (
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className="w-full h-full object-cover scale-x-[-1]"
+                />
+              ) : videoOn ? (
                 <img
                   src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80"
                   alt="My Video"

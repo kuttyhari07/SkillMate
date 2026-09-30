@@ -1,31 +1,32 @@
-import crypto from 'crypto';
-
-export const createMeetingRoom = async ({ title, date, time, durationMinutes = 60, mentor, learner }) => {
-  const isGoogleConfigured = Boolean(
-    process.env.GOOGLE_CLIENT_ID && 
-    process.env.GOOGLE_CLIENT_SECRET && 
-    process.env.GOOGLE_REFRESH_TOKEN
-  );
-
-  if (isGoogleConfigured) {
-    try {
-      // In production with tokens:
-      // return { meetingLink: 'https://meet.google.com/xyz-abc-def', isDemo: false };
-    } catch (err) {
-      console.warn('[MeetingService] Google Meet creation failed, falling back to Demo Meeting room');
-    }
+export const createMeetingRoom = async ({ title, date, time, durationMinutes = 60, mentor, learner, meetingLink: customLink }) => {
+  if (customLink && customLink.trim()) {
+    return {
+      meetingLink: customLink.trim(),
+      roomId: customLink.split('/').pop(),
+      isGoogleMeet: customLink.includes('meet.google.com'),
+      provider: 'Google Meet'
+    };
   }
 
-  // SkillMate Demo Interactive Meeting Room (Hackathon/Demo Safe)
-  const roomId = 'sm-' + crypto.randomBytes(4).toString('hex');
-  const demoLink = `http://localhost:5173/meeting/${roomId}`;
+  // Generate standard 10-char Google Meet code format: abc-defg-hij
+  const randChars = (len) => {
+    const chars = 'abcdefghijklmnopqrstuvwxyz';
+    let result = '';
+    for (let i = 0; i < len; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+  };
+
+  const meetCode = `${randChars(3)}-${randChars(4)}-${randChars(3)}`;
+  const meetLink = `https://meet.google.com/${meetCode}`;
 
   return {
-    meetingLink: demoLink,
-    roomId,
-    isDemo: true,
-    provider: 'SkillMate Virtual Meeting Room (Demo Mode)',
-    instructions: 'Interactive peer learning room equipped with simulated HD Video, Audio, Whiteboard, and Code Sharing.'
+    meetingLink: meetLink,
+    roomId: meetCode,
+    isGoogleMeet: true,
+    provider: 'Google Meet',
+    instructions: 'Live 1-on-1 audio and video session on Google Meet. Join with camera and microphone to speak with your SkillMate.'
   };
 };
 

@@ -19,6 +19,7 @@ import MCQPractice from './pages/MCQPractice';
 import CodingPractice from './pages/CodingPractice';
 import FindMates from './pages/FindMates';
 import Messages from './pages/Messages';
+import Chat from './pages/Chat';
 import Sessions from './pages/Sessions';
 import DemoMeetingRoom from './pages/DemoMeetingRoom';
 import PeerPractice from './pages/PeerPractice';
@@ -77,6 +78,7 @@ export default function App() {
                 <Route path="/coding/:levelId" element={<ProtectedRoute><CodingPractice /></ProtectedRoute>} />
                 <Route path="/find-mates" element={<ProtectedRoute><FindMates /></ProtectedRoute>} />
                 <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
+                <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
                 <Route path="/sessions" element={<ProtectedRoute><Sessions /></ProtectedRoute>} />
                 <Route path="/meeting/:roomId" element={<ProtectedRoute><DemoMeetingRoom /></ProtectedRoute>} />
                 <Route path="/practice" element={<ProtectedRoute><PeerPractice /></ProtectedRoute>} />

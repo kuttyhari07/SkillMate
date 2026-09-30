@@ -38,15 +38,15 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo & Brand */}
-          <Link to={user ? "/dashboard" : "/"} className="flex items-center gap-2.5 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-900 to-blue-700 flex items-center justify-center text-white shadow-md shadow-blue-900/20 group-hover:scale-105 transition-transform">
-              <GraduationCap className="w-6 h-6 text-blue-200" />
+          <Link to={user ? "/dashboard" : "/"} className="flex items-center gap-2 sm:gap-2.5 group shrink-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-blue-900 to-blue-700 flex items-center justify-center text-white shadow-md shadow-blue-900/20 group-hover:scale-105 transition-transform shrink-0">
+              <GraduationCap className="w-5 h-5 sm:w-6 sm:h-6 text-blue-200" />
             </div>
             <div>
-              <span className="text-xl font-extrabold tracking-tight text-slate-900 flex items-center gap-1">
+              <span className="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900 flex items-center gap-1 whitespace-nowrap">
                 SKILL<span className="text-blue-600">MATE</span>
               </span>
-              <p className="text-[10px] text-slate-500 font-medium tracking-wide hidden sm:block">
+              <p className="text-[10px] text-slate-500 font-medium tracking-wide hidden sm:block whitespace-nowrap">
                 Connect Skills. Learn Together.
               </p>
             </div>
@@ -121,32 +121,33 @@ export default function Navbar() {
           </div>
 
           {/* Right Header Section */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             {user ? (
               <>
                 {/* Skill Credits Badge */}
                 <Link
                   to="/my-learning"
                   title="Skill Credits balance"
-                  className="flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-800 rounded-full border border-amber-200 text-xs font-bold hover:bg-amber-100 transition-colors shadow-xs"
+                  className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 bg-amber-50 text-amber-800 rounded-full border border-amber-200 text-xs font-bold hover:bg-amber-100 transition-colors shadow-xs whitespace-nowrap shrink-0"
                 >
-                  <Coins className="w-3.5 h-3.5 text-amber-600 animate-spin-slow" />
-                  <span>{user.skillCredits || 100} Credits</span>
+                  <Coins className="w-3.5 h-3.5 text-amber-600 animate-spin-slow shrink-0" />
+                  <span>{user.skillCredits || 100}</span>
+                  <span className="hidden sm:inline">Credits</span>
                 </Link>
 
                 {/* Notifications */}
                 <NotificationDropdown />
 
                 {/* User Profile Dropdown */}
-                <div className="relative">
+                <div className="relative shrink-0">
                   <button
                     onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-                    className="flex items-center gap-2 p-1 pl-2 rounded-full hover:bg-slate-100 border border-slate-200 transition-colors"
+                    className="flex items-center gap-2 p-1 lg:pl-2 rounded-full hover:bg-slate-100 border border-slate-200 transition-colors shrink-0"
                   >
                     <img
                       src={user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`}
                       alt={user.name}
-                      className="w-8 h-8 rounded-full object-cover border border-slate-300"
+                      className="w-8 h-8 rounded-full object-cover border border-slate-300 shrink-0"
                     />
                     <span className="text-xs font-semibold text-slate-800 hidden lg:inline max-w-[100px] truncate">
                       {user.name.split(' ')[0]}
@@ -256,7 +257,7 @@ export default function Navbar() {
             {/* Mobile menu button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100"
+              className="md:hidden p-2 text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100 shrink-0"
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>

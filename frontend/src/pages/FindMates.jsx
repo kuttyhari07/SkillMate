@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/client';
 import MilestoneModal from '../components/MilestoneModal';
@@ -20,6 +20,7 @@ import {
 
 export default function FindMates() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [matches, setMatches] = useState([]);
   const [connections, setConnections] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -190,27 +191,27 @@ export default function FindMates() {
                 {/* Header with Avatar and Match Score */}
                 <div className="space-y-4">
                   <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
                       <img
                         src={peer.avatar}
                         alt={peer.name}
-                        className="w-12 h-12 rounded-full object-cover border-2 border-slate-200"
+                        className="w-12 h-12 rounded-full object-cover border-2 border-slate-200 shrink-0"
                       />
-                      <div>
-                        <h3 className="font-bold text-slate-900 text-base leading-tight">
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-bold text-slate-900 text-base leading-tight truncate">
                           {peer.name}
                         </h3>
-                        <p className="text-[11px] text-slate-500">{peer.college}</p>
-                        <p className="text-[10px] text-slate-400">{peer.department} • {peer.year}</p>
+                        <p className="text-[11px] text-slate-500 truncate">{peer.college}</p>
+                        <p className="text-[10px] text-slate-400 truncate">{peer.department} • {peer.year}</p>
                       </div>
                     </div>
 
-                    <div className="text-right">
-                      <span className="inline-block px-2.5 py-1 rounded-full text-xs font-black bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-2xs">
+                    <div className="text-right shrink-0">
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-black bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-2xs whitespace-nowrap shrink-0">
                         {matchScore}% Match
                       </span>
-                      <div className="flex items-center gap-1 justify-end text-[11px] font-bold text-amber-500 mt-1">
-                        <Star className="w-3 h-3 fill-amber-400" />
+                      <div className="flex items-center gap-1 justify-end text-[11px] font-bold text-amber-500 mt-1 whitespace-nowrap">
+                        <Star className="w-3 h-3 fill-amber-400 shrink-0" />
                         <span>{peer.averageRating || 4.9}</span>
                         <span className="text-slate-400 font-normal">({peer.reviewsCount || 10})</span>
                       </div>

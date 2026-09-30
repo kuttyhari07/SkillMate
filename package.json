@@ -1,0 +1,12 @@
+{
+  "name": "skillmate",
+  "version": "1.0.0",
+  "description": "SkillMate - Connect Skills. Learn Together.",
+  "private": true,
+  "scripts": {
+    "dev": "npx -y concurrently -k -n \"BACKEND,FRONTEND\" -c \"cyan,magenta\" \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
+    "dev:backend": "npm run dev --prefix backend",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "install:all": "npm install --prefix backend && npm install --prefix frontend"
+  }
+}

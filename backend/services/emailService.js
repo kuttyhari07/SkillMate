@@ -24,34 +24,51 @@ if (RESEND_KEY) {
   }
 }
 
+const GMAIL_USER = process.env.GMAIL_USER || (process.env.SMTP_USER?.includes('@gmail.com') ? process.env.SMTP_USER : null);
+const GMAIL_PASS = process.env.GMAIL_PASS || process.env.GMAIL_APP_PASSWORD || process.env.SMTP_PASS;
+
 let smtpTransporter = null;
-if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
+if (GMAIL_USER && GMAIL_PASS) {
+  try {
+    smtpTransporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: GMAIL_USER,
+        pass: GMAIL_PASS
+      }
+    });
+    console.log('[EmailService] Gmail SMTP transporter initialized successfully.');
+  } catch (err) {
+    console.warn('[EmailService] Gmail SMTP init error:', err.message);
+  }
+} else if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
   try {
     smtpTransporter = nodemailer.createTransport({
       host: SMTP_HOST,
       port: parseInt(process.env.SMTP_PORT || '587'),
-      secure: process.env.SMTP_SECURE === 'true',
+      secure: process.env.SMTP_SECURE === 'true' || process.env.SMTP_PORT === '465',
       auth: {
         user: SMTP_USER,
         pass: SMTP_PASS
       }
     });
+    console.log('[EmailService] Custom SMTP transporter initialized successfully.');
   } catch (err) {
     console.warn('[EmailService] SMTP init error:', err.message);
   }
 }
 
 /**
- * Detect which email delivery channel to prioritize (Resend is primary)
+ * Detect which email delivery channel to prioritize
  */
 export const getActiveEmailProvider = () => {
-  if (RESEND_KEY && resendClient) return 'resend';
   const explicit = (process.env.EMAIL_PROVIDER || '').toLowerCase();
-  if (explicit === 'resend') return 'resend';
-  if (explicit === 'brevo' && (BREVO_KEY || (BREVO_SMTP_USER && BREVO_SMTP_PASS))) return 'brevo';
-  if (BREVO_KEY) return 'brevo_api';
-  if (BREVO_SMTP_USER && BREVO_SMTP_PASS) return 'brevo_smtp';
+  if (explicit === 'brevo') return 'brevo';
+  if (explicit === 'smtp' || explicit === 'gmail') return 'smtp';
+  if (explicit === 'resend' && resendClient) return 'resend';
+  if (process.env.BREVO_API_KEY || BREVO_KEY) return 'brevo';
   if (smtpTransporter) return 'smtp';
+  if (resendClient) return 'resend';
   return 'preview';
 };
 
@@ -59,14 +76,15 @@ export const getActiveEmailProvider = () => {
  * Send email through Brevo REST API v3
  */
 const sendViaBrevoApi = async ({ to, subject, html, text }) => {
-  const senderEmail = process.env.BREVO_SENDER_EMAIL || process.env.EMAIL_FROM_ADDRESS || 'noreply@skillmate.edu';
+  const apiKey = process.env.BREVO_API_KEY || BREVO_KEY;
+  const senderEmail = process.env.BREVO_SENDER_EMAIL || process.env.EMAIL_FROM_ADDRESS || 'hariharangmhk0429@gmail.com';
   const senderName = process.env.EMAIL_FROM_NAME || 'SkillMate';
 
   const response = await fetch('https://api.brevo.com/v3/smtp/email', {
     method: 'POST',
     headers: {
       'accept': 'application/json',
-      'api-key': BREVO_KEY,
+      'api-key': apiKey,
       'content-type': 'application/json'
     },
     body: JSON.stringify({
@@ -88,12 +106,11 @@ const sendViaBrevoApi = async ({ to, subject, html, text }) => {
 };
 
 /**
- * Universal email sender supporting Resend, Brevo, SMTP, and Dev Preview
+ * Universal email sender supporting Brevo, SMTP, Resend, and Dev Preview
  */
 export const sendEmail = async ({ to, subject, html, text, category = 'General' }) => {
   const store = getStore();
   const provider = getActiveEmailProvider();
-  const from = process.env.EMAIL_FROM || '"SkillMate" <onboarding@resend.dev>';
 
   const logEntry = {
     id: 'email_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
@@ -102,15 +119,55 @@ export const sendEmail = async ({ to, subject, html, text, category = 'General' 
     htmlBody: html,
     category,
     provider,
-    status: provider === 'preview' ? 'preview_logged' : 'pending',
+    status: 'pending',
     createdAt: new Date().toISOString()
   };
 
   store.emailLogs.unshift(logEntry);
   saveStore();
 
-  // 1. Send via Resend (Primary Provider with RESEND_API_KEY)
-  if (resendClient) {
+  // 1. Try Brevo API if prioritized or configured
+  const brevoKey = process.env.BREVO_API_KEY || BREVO_KEY;
+  if ((provider === 'brevo' || provider === 'brevo_api' || (process.env.EMAIL_PROVIDER || '').toLowerCase() === 'brevo') && brevoKey) {
+    try {
+      const res = await sendViaBrevoApi({ to, subject, html, text });
+      logEntry.status = 'sent';
+      logEntry.provider = 'brevo';
+      logEntry.providerMessageId = res.messageId;
+      saveStore();
+      console.log(`[EmailService - Brevo API] Email dispatched successfully to ${to} (${subject}) [ID: ${res.messageId}]`);
+      return { success: true, mode: 'brevo', id: res.messageId, logEntry };
+    } catch (err) {
+      console.error(`[EmailService - Brevo API Error] Failed to send to ${to}:`, err.message);
+      logEntry.error = err.message;
+    }
+  }
+
+  // 1. If explicit SMTP is configured as primary, dispatch via SMTP first
+  if (provider === 'smtp' && smtpTransporter) {
+    try {
+      const from = process.env.EMAIL_FROM || process.env.GMAIL_USER || process.env.SMTP_USER || '"SkillMate" <no-reply@skillmate.edu>';
+      const info = await smtpTransporter.sendMail({
+        from,
+        to,
+        subject,
+        html,
+        text: text || subject
+      });
+      logEntry.status = 'sent';
+      logEntry.provider = 'smtp';
+      logEntry.providerMessageId = info.messageId;
+      saveStore();
+      console.log(`[EmailService - SMTP] Email dispatched successfully to ${to} (${subject}) [ID: ${info.messageId}]`);
+      return { success: true, mode: 'smtp', id: info.messageId, logEntry };
+    } catch (err) {
+      console.error(`[EmailService - SMTP Error] Failed to send to ${to}:`, err.message);
+      logEntry.error = err.message;
+    }
+  }
+
+  // 2. Try Resend
+  if (resendClient && (process.env.EMAIL_PROVIDER || '').toLowerCase() !== 'smtp') {
     try {
       const from = process.env.RESEND_FROM || process.env.EMAIL_FROM || 'SkillMate <onboarding@resend.dev>';
       const res = await resendClient.emails.send({
@@ -121,50 +178,53 @@ export const sendEmail = async ({ to, subject, html, text, category = 'General' 
         text: text || subject
       });
 
-      if (res.error) {
-        logEntry.status = 'preview_logged';
-        logEntry.error = res.error.message;
+      if (!res.error) {
+        logEntry.status = 'sent';
+        logEntry.provider = 'resend';
+        logEntry.providerMessageId = res.data?.id;
         saveStore();
-        console.warn(`[EmailService - Resend Warning] Could not deliver to ${to}: ${res.error.message}`);
-        return { success: false, mode: 'resend', error: res.error.message, logEntry };
+        console.log(`[EmailService - Resend] Email dispatched successfully to ${to} (${subject}) [ID: ${res.data?.id}]`);
+        return { success: true, mode: 'resend', id: res.data?.id, logEntry };
       }
 
-      logEntry.status = 'sent';
-      logEntry.provider = 'resend';
-      logEntry.providerMessageId = res.data?.id;
-      saveStore();
-      console.log(`[EmailService - Resend] Email dispatched successfully to ${to} (${subject}) [ID: ${res.data?.id}]`);
-      return { success: true, mode: 'resend', id: res.data?.id, logEntry };
+      console.warn(`[EmailService - Resend Warning] Could not deliver to ${to}: ${res.error.message}`);
+      logEntry.error = res.error.message;
+
+      // If Resend failed (e.g. testing domain restriction), try SMTP fallback if available
+      if (smtpTransporter) {
+        console.log(`[EmailService] Resend restricted recipient, falling back to SMTP for ${to}...`);
+        try {
+          const from = process.env.EMAIL_FROM || process.env.GMAIL_USER || process.env.SMTP_USER || '"SkillMate" <no-reply@skillmate.edu>';
+          const info = await smtpTransporter.sendMail({
+            from,
+            to,
+            subject,
+            html,
+            text: text || subject
+          });
+          logEntry.status = 'sent';
+          logEntry.provider = 'smtp';
+          logEntry.providerMessageId = info.messageId;
+          saveStore();
+          console.log(`[EmailService - SMTP Fallback] Email dispatched successfully to ${to} (${subject})`);
+          return { success: true, mode: 'smtp', id: info.messageId, logEntry };
+        } catch (smtpErr) {
+          console.error(`[EmailService - SMTP Fallback Error] Failed to send to ${to}:`, smtpErr.message);
+          logEntry.error = smtpErr.message;
+        }
+      }
     } catch (err) {
       console.error(`[EmailService - Resend Error] Failed to send to ${to}:`, err.message);
-      logEntry.status = 'preview_logged';
-      logEntry.error = err.message;
-      saveStore();
-      return { success: false, mode: 'resend', error: err.message, logEntry };
-    }
-  }
-
-  // 2. Try Brevo API if configured
-  if (BREVO_KEY) {
-    try {
-      const res = await sendViaBrevoApi({ to, subject, html, text });
-      logEntry.status = 'sent';
-      logEntry.provider = 'brevo_api';
-      logEntry.providerMessageId = res.messageId;
-      saveStore();
-      console.log(`[EmailService - Brevo API] Email dispatched successfully to ${to} (${subject})`);
-      return { success: true, mode: 'brevo_api', id: res.messageId, logEntry };
-    } catch (err) {
-      console.error(`[EmailService - Brevo API Error] Failed to send to ${to}:`, err.message);
       logEntry.error = err.message;
     }
   }
 
-  // 3. Fallback SMTP if configured
+  // 3. Fallback SMTP if not already attempted
   if (smtpTransporter && logEntry.status !== 'sent') {
     try {
+      const from = process.env.EMAIL_FROM || process.env.GMAIL_USER || process.env.SMTP_USER || '"SkillMate" <no-reply@skillmate.edu>';
       const info = await smtpTransporter.sendMail({
-        from: process.env.EMAIL_FROM || '"SkillMate" <no-reply@skillmate.edu>',
+        from,
         to,
         subject,
         html,
@@ -182,10 +242,26 @@ export const sendEmail = async ({ to, subject, html, text, category = 'General' 
     }
   }
 
-  // 4. Development Preview Mode fallback
+  // 4. Try Brevo API if configured
+  if (BREVO_KEY && logEntry.status !== 'sent') {
+    try {
+      const res = await sendViaBrevoApi({ to, subject, html, text });
+      logEntry.status = 'sent';
+      logEntry.provider = 'brevo_api';
+      logEntry.providerMessageId = res.messageId;
+      saveStore();
+      console.log(`[EmailService - Brevo API] Email dispatched successfully to ${to} (${subject})`);
+      return { success: true, mode: 'brevo_api', id: res.messageId, logEntry };
+    } catch (err) {
+      console.error(`[EmailService - Brevo API Error] Failed to send to ${to}:`, err.message);
+      logEntry.error = err.message;
+    }
+  }
+
+  // 5. Development Preview Mode fallback
   logEntry.status = 'preview_logged';
   saveStore();
-  console.log(`[EmailService - Dev Preview] To: ${to} | Subject: "${subject}" | Category: ${category}`);
+  console.log(`[EmailService - Dev Preview Logged] To: ${to} | Subject: "${subject}" | Category: ${category}`);
   return { success: true, mode: 'preview', logEntry };
 };
 
@@ -418,7 +494,8 @@ export const emailTemplates = {
   },
 
   // 8. New Direct Message
-  newMessage: (senderName, contentSnippet) => {
+  // 8. New Direct Message
+  newMessage: (senderName, contentSnippet, replyLink = 'http://localhost:5173/messages') => {
     const title = 'New Message on SkillMate';
     const content = `
       <h2 style="margin: 0 0 12px; color: #0f172a; font-size: 20px; font-weight: 700;">New Message from ${senderName} 💬</h2>
@@ -426,13 +503,19 @@ export const emailTemplates = {
         You have received a new message from <strong>${senderName}</strong>:
       </p>
 
-      <div style="background: #f1f5f9; border-left: 4px solid #2563eb; border-radius: 0 10px 10px 0; padding: 14px 18px; margin: 20px 0;">
-        <p style="margin: 0; color: #1e293b; font-size: 14px; font-style: italic;">
-          "${contentSnippet.length > 120 ? contentSnippet.substring(0, 120) + '...' : contentSnippet}"
+      <div style="background: #f1f5f9; border-left: 4px solid #2563eb; border-radius: 0 10px 10px 0; padding: 16px 20px; margin: 20px 0;">
+        <p style="margin: 0; color: #1e293b; font-size: 15px; font-style: italic; line-height: 1.6;">
+          "${contentSnippet.length > 200 ? contentSnippet.substring(0, 200) + '...' : contentSnippet}"
         </p>
       </div>
 
-      <p style="margin: 0; color: #64748b; font-size: 13px;">
+      <div style="margin: 24px 0 10px; text-align: center;">
+        <a href="${replyLink}" style="background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 10px; font-weight: 700; font-size: 14px; display: inline-block;">
+          💬 Reply in SkillMate Chat
+        </a>
+      </div>
+
+      <p style="margin: 16px 0 0; color: #64748b; font-size: 12px; text-align: center;">
         Reply promptly to maintain an active learning partnership.
       </p>
     `;
@@ -440,23 +523,77 @@ export const emailTemplates = {
     return {
       subject: `💬 New Message from ${senderName} on SkillMate`,
       category: 'Message',
-      html: baseTemplate(title, content, { url: 'http://localhost:5173/messages', text: 'Reply in Chat' })
+      html: baseTemplate(title, content)
     };
   },
 
   // 9. Session Scheduled
   sessionScheduled: (topic, date, time, meetingLink, isDemo) => {
-    const title = 'SkillMate Session Confirmed';
+    const isGoogle = meetingLink && meetingLink.includes('meet.google.com');
+    const title = isGoogle ? 'SkillMate Google Meet Session Confirmed' : 'SkillMate Session Confirmed';
     const content = `
-      <h2 style="margin: 0 0 12px; color: #0f172a; font-size: 20px; font-weight: 700;">Session Confirmed: ${topic} 📅</h2>
-      <p style="margin: 0 0 14px; color: #475569; font-size: 14px;"><strong>Date & Time:</strong> ${date} at ${time}</p>
-      <p style="margin: 0 0 16px; color: #475569; font-size: 14px;"><strong>Room Type:</strong> ${isDemo ? 'SkillMate Interactive Peer Room' : 'Google Meet'}</p>
+      <h2 style="margin: 0 0 12px; color: #0f172a; font-size: 22px; font-weight: 800;">${isGoogle ? 'Google Meet Call Confirmed 🎥' : 'Session Confirmed 📅'}</h2>
+      <p style="margin: 0 0 16px; color: #475569; font-size: 15px; line-height: 1.6;">
+        Your 1-on-1 peer session on <strong>${topic}</strong> has been scheduled and confirmed on SkillMate!
+      </p>
+
+      <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 14px; padding: 18px; margin: 20px 0;">
+        <p style="margin: 0 0 8px; color: #166534; font-size: 14px;"><strong>📅 Date & Time:</strong> ${date} at ${time}</p>
+        <p style="margin: 0 0 8px; color: #166534; font-size: 14px;"><strong>🌐 Meeting Platform:</strong> ${isGoogle ? 'Google Meet (Live Video & Audio)' : 'SkillMate Live Room'}</p>
+        <p style="margin: 0; color: #15803d; font-size: 13px;">Join with your microphone and camera to talk, exchange skills, and code together.</p>
+      </div>
+
+      <div style="margin: 28px 0 16px; text-align: center;">
+        <a href="${meetingLink}" target="_blank" rel="noopener noreferrer" style="background: linear-gradient(135deg, #059669, #0d9488); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 12px; font-weight: 800; font-size: 15px; display: inline-block; box-shadow: 0 4px 14px rgba(5, 150, 105, 0.4);">
+          🎥 Join Google Meet Session
+        </a>
+      </div>
+
+      <p style="margin: 16px 0 0; color: #64748b; font-size: 12px; text-align: center; word-break: break-all;">
+        Direct Meeting URL:<br>
+        <a href="${meetingLink}" target="_blank" rel="noopener noreferrer" style="color: #2563eb; text-decoration: underline;">${meetingLink}</a>
+      </p>
     `;
 
     return {
-      subject: `📅 SkillMate Session Scheduled: ${topic}`,
+      subject: `🎥 SkillMate Google Meet Session: ${topic}`,
       category: 'Session',
-      html: baseTemplate(title, content, { url: meetingLink || 'http://localhost:5173/sessions', text: 'Join Meeting Room' })
+      html: baseTemplate(title, content)
+    };
+  },
+
+  // 10. Instant Room Invitation
+  instantRoomInvite: (senderName, topic, meetingLink) => {
+    const isGoogle = meetingLink && meetingLink.includes('meet.google.com');
+    const title = 'Live Google Meet Call Invitation';
+    const content = `
+      <h2 style="margin: 0 0 12px; color: #0f172a; font-size: 22px; font-weight: 800;">${senderName} is waiting for you in Google Meet! 🎥</h2>
+      <p style="margin: 0 0 16px; color: #475569; font-size: 15px; line-height: 1.6;">
+        Hello! <strong>${senderName}</strong> has just started a live 1-on-1 Google Meet session and invited you to talk and practice right now.
+      </p>
+
+      <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 14px; padding: 18px; margin: 20px 0;">
+        <p style="margin: 0 0 8px; color: #166534; font-size: 14px;"><strong>Topic:</strong> ${topic || 'Live Peer Study Session'}</p>
+        <p style="margin: 0 0 8px; color: #166534; font-size: 14px;"><strong>Host:</strong> ${senderName}</p>
+        <p style="margin: 0; color: #15803d; font-size: 13px;">Click below to join the call immediately with your microphone and camera.</p>
+      </div>
+
+      <div style="margin: 28px 0 16px; text-align: center;">
+        <a href="${meetingLink}" target="_blank" rel="noopener noreferrer" style="background: linear-gradient(135deg, #059669, #0d9488); color: #ffffff; text-decoration: none; padding: 14px 34px; border-radius: 12px; font-weight: 800; font-size: 15px; display: inline-block; box-shadow: 0 4px 14px rgba(5, 150, 105, 0.4);">
+          🎥 Join Google Meet Now
+        </a>
+      </div>
+
+      <p style="margin: 16px 0 0; color: #64748b; font-size: 12px; text-align: center; word-break: break-all;">
+        Direct Link:<br>
+        <a href="${meetingLink}" target="_blank" rel="noopener noreferrer" style="color: #2563eb; text-decoration: underline;">${meetingLink}</a>
+      </p>
+    `;
+
+    return {
+      subject: `🎥 ${senderName} invited you to join Google Meet right now!`,
+      category: 'Room Invite',
+      html: baseTemplate(title, content)
     };
   },
 

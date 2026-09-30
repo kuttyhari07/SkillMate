@@ -71,7 +71,9 @@ router.post('/', authMiddleware, async (req, res) => {
     // Trigger email notification to receiver
     if (receiver.email) {
       try {
-        const template = emailTemplates.newMessage(req.user.name, content);
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        const replyLink = `${frontendUrl}/messages?partnerId=${req.user.id}`;
+        const template = emailTemplates.newMessage(req.user.name, content, replyLink);
         await sendEmail({
           to: receiver.email,
           subject: template.subject,
