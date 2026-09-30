@@ -1,7 +1,48 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-// Fallback contextual intelligence engine for when OpenAI API key is not provided
+/**
+ * SkillMate AI Tutor & Mentor - System Prompt Builder
+ * Trains the LLM with SkillMate platform awareness, persona, and user context.
+ */
+export const buildSkillMateSystemPrompt = (context = {}) => {
+  const studentName = context.userName || 'Student';
+  const skill = context.skill || 'Full Stack Development';
+  const level = context.level || 'Beginner';
+  const scoreInfo = context.recentScores && context.recentScores.length > 0
+    ? `Recent quiz scores: ${context.recentScores.join('%, ')}% (Average: ${Math.round(context.recentScores.reduce((a, b) => a + b, 0) / context.recentScores.length)}%)`
+    : 'No recent test attempts yet';
+  const credits = context.skillCredits !== undefined ? `${context.skillCredits} Skill Credits` : '';
+
+  return `You are SkillMate AI — the dedicated personal tutor, mentor, and peer study companion inside the SkillMate learning platform.
+
+### Student Context:
+- Student Name: ${studentName}
+- Current Skill Track: ${skill}
+- Current Level / Stage: ${level}
+- Quiz Performance: ${scoreInfo}
+${credits ? `- Credits Balance: ${credits}` : ''}
+
+### Personality & Training Guidelines:
+1. **Friendly Peer Mentor Tone**: Be enthusiastic, encouraging, and supportive (like a helpful college senior or peer buddy).
+2. **Language Adaptability**:
+   - If the student speaks to you in Tamil or Tanglish (e.g., "Machi", "Epdi irukku", "Enakku idhu purila", "Explain pannu"), respond naturally in friendly, clear Tanglish!
+   - If they write in English, reply in crisp, professional, and friendly English.
+3. **SkillMate Platform Awareness**:
+   - **Roadmaps & Levels**: Levels 1 to 5 unlock step-by-step through MCQs and practical mini-challenges.
+   - **Peer Practice**: Students can match with peers based on mutual skills (e.g. Swedha, Priya, Rahul), schedule 1-on-1 video sessions via WebRTC, and practice together.
+   - **Skill Credits**: Students earn +20 credits by completing levels and hosting sessions, and spend credits to book peer sessions.
+   - **MCQ & Coding Practice**: Instant scoring, answer explanations, and coding sandboxes.
+4. **Teaching Methodology**:
+   - Give concise, punchy explanations (students dislike long dry walls of text).
+   - Use simple real-world analogies first, then show a clean code snippet or bulleted list.
+   - When asked for practice, give 1 targeted question or a mini-challenge with options.
+   - When analyzing test scores, highlight the top 2-3 weak areas to revise.
+
+Format responses neatly with GitHub-flavored Markdown (bold keywords, bullet points, clean code blocks).`;
+};
+
+// Fallback contextual intelligence engine for when no API key or network is available
 const generateFallbackResponse = (message, context = {}) => {
   const lower = message.toLowerCase();
   const skill = context.skill || 'Full Stack Development';
@@ -94,10 +135,144 @@ What would you like help with right now?`,
   };
 };
 
+/**
+ * Google Gemini API Client
+ */
+const callGemini = async ({ message, history = [], context = {} }) => {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) return null;
+
+  const candidateModels = [
+    process.env.GEMINI_MODEL || 'gemini-3.5-flash',
+    'gemini-3.5-flash-lite'
+  ];
+
+  const systemInstruction = buildSkillMateSystemPrompt(context);
+
+  // Format conversational contents
+  const contents = [];
+  if (Array.isArray(history) && history.length > 0) {
+    for (const item of history) {
+      const text = item.text || item.content || '';
+      if (!text) continue;
+      const role = (item.sender === 'user' || item.role === 'user') ? 'user' : 'model';
+      contents.push({ role, parts: [{ text }] });
+    }
+  }
+
+  // Append latest user message
+  contents.push({ role: 'user', parts: [{ text: message }] });
+
+  for (const model of candidateModels) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: systemInstruction }] },
+          contents,
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 1500
+          }
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const reply = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (reply && reply.trim()) {
+          return {
+            reply: reply.trim(),
+            mode: 'gemini',
+            model
+          };
+        }
+      } else {
+        const errorText = await response.text();
+        console.warn(`[AIService] Gemini model ${model} returned status ${response.status}:`, errorText);
+      }
+    } catch (err) {
+      console.warn(`[AIService] Gemini model ${model} network error:`, err.message);
+    }
+  }
+
+  return null;
+};
+
+/**
+ * OpenAI API Client (Secondary Fallback)
+ */
+const callOpenAI = async ({ message, context = {} }) => {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey || !apiKey.startsWith('sk-')) return null;
+
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: process.env.OPENAI_MODEL || 'gpt-3.5-turbo',
+        messages: [
+          {
+            role: 'system',
+            content: buildSkillMateSystemPrompt(context)
+          },
+          { role: 'user', content: message }
+        ],
+        temperature: 0.7,
+        max_tokens: 800
+      })
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const reply = data.choices?.[0]?.message?.content;
+      if (reply) {
+        return { reply, mode: 'openai' };
+      }
+    }
+  } catch (err) {
+    console.warn('[AIService] OpenAI request failed:', err.message);
+  }
+
+  return null;
+};
+
 // Generates suggested agenda for learning sessions
-export const generateSessionPlan = async ({ skill, topic, level = 'Beginner', durationMinutes = 60 }) => {
+export const generateSessionPlan = async ({ skill = 'Programming', topic = 'Core Fundamentals', level = 'Beginner', durationMinutes = 60 }) => {
   const duration = parseInt(durationMinutes) || 60;
-  
+
+  // Try Gemini dynamic agenda generation
+  if (process.env.GEMINI_API_KEY) {
+    try {
+      const prompt = `Generate a structured, professional ${duration}-minute 4-part peer learning session agenda for teaching/learning "${topic}" in ${skill} at ${level} level.
+Return ONLY valid JSON array with 4 items:
+[
+  { "time": "X min", "topic": "Short Topic Title", "description": "1 concise sentence explanation" }
+]`;
+
+      const geminiResult = await callGemini({
+        message: prompt,
+        context: { skill, level }
+      });
+
+      if (geminiResult && geminiResult.reply) {
+        const cleaned = geminiResult.reply.replace(/```json/g, '').replace(/```/g, '').trim();
+        const parsed = JSON.parse(cleaned);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.warn('[AIService] Dynamic agenda generation fallback:', e.message);
+    }
+  }
+
   if (skill.toLowerCase().includes('dance')) {
     return [
       { time: '10 min', topic: 'Warm-up & Rhythm Check', description: 'Body conditioning and matching beat pulses' },
@@ -130,43 +305,20 @@ export const generateSessionPlan = async ({ skill, topic, level = 'Beginner', du
   ];
 };
 
-export const chatWithAI = async ({ message, context = {} }) => {
-  // If OpenAI key is present, try OpenAI
-  if (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.startsWith('sk-')) {
-    try {
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
-        },
-        body: JSON.stringify({
-          model: process.env.OPENAI_MODEL || 'gpt-3.5-turbo',
-          messages: [
-            {
-              role: 'system',
-              content: `You are SkillMate AI, an encouraging, concise EdTech tutor and peer-learning mentor. The student is currently studying ${context.skill || 'Full Stack'} at level: ${context.level || 'Beginner'}. Use concise formatting with markdown, bullet points, and code blocks where helpful.`
-            },
-            { role: 'user', content: message }
-          ],
-          temperature: 0.7,
-          max_tokens: 500
-        })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const reply = data.choices?.[0]?.message?.content;
-        if (reply) {
-          return { reply, mode: 'openai' };
-        }
-      }
-    } catch (err) {
-      console.warn('[AIService] OpenAI request failed, falling back to local engine:', err.message);
-    }
+export const chatWithAI = async ({ message, history = [], context = {} }) => {
+  // 1. Try Google Gemini API (Primary)
+  const geminiResponse = await callGemini({ message, history, context });
+  if (geminiResponse) {
+    return geminiResponse;
   }
 
-  // Zero-fail intelligent fallback mode
+  // 2. Try OpenAI API (Secondary)
+  const openAIResponse = await callOpenAI({ message, context });
+  if (openAIResponse) {
+    return openAIResponse;
+  }
+
+  // 3. Zero-fail intelligent fallback mode
   const fallback = generateFallbackResponse(message, context);
   return { ...fallback, mode: 'smart_fallback' };
 };
@@ -205,5 +357,6 @@ export const getPersonalizedRecommendation = ({ user, progress, recentScores = [
 export default {
   chatWithAI,
   generateSessionPlan,
-  getPersonalizedRecommendation
+  getPersonalizedRecommendation,
+  buildSkillMateSystemPrompt
 };

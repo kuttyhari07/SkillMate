@@ -34,9 +34,13 @@ export default function AIAssistantModal() {
     setLoading(true);
 
     try {
-      const res = await api.post('/ai/chat', { message: textToSend });
+      const historyToSend = messages.slice(-6);
+      const res = await api.post('/ai/chat', {
+        message: textToSend,
+        history: historyToSend
+      });
       const aiReply = res.data.reply || "I'm reviewing your learning roadmap. What specific concept would you like to practice?";
-      setMessages(prev => [...prev, { sender: 'ai', text: aiReply }]);
+      setMessages(prev => [...prev, { sender: 'ai', text: aiReply, mode: res.data.mode }]);
     } catch (err) {
       setMessages(prev => [
         ...prev,
@@ -48,10 +52,10 @@ export default function AIAssistantModal() {
   };
 
   const quickPrompts = [
-    { label: "Explain HTML forms simply", icon: BookOpen },
+    { label: "Machi HTML Forms pathi sollu", icon: BookOpen },
     { label: "What should I revise based on my score?", icon: RefreshCw },
-    { label: "Give me another practice question", icon: HelpCircle },
-    { label: "Plan a 3-month Full Stack study schedule", icon: Calendar }
+    { label: "Give me a practice question", icon: HelpCircle },
+    { label: "Plan a 12-week study schedule", icon: Calendar }
   ];
 
   return (
@@ -81,7 +85,10 @@ export default function AIAssistantModal() {
                   SkillMate AI Tutor
                   <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                 </h3>
-                <p className="text-[11px] text-slate-300">Context-Aware Learning Companion</p>
+                <p className="text-[11px] text-slate-300 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                  Gemini 3.5 &amp; Roadmap Trained
+                </p>
               </div>
             </div>
             <button

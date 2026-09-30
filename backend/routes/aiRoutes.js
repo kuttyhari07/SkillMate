@@ -8,23 +8,36 @@ const router = express.Router();
 // Floating AI Chat Assistant
 router.post('/chat', authMiddleware, async (req, res) => {
   try {
-    const { message, context = {} } = req.body;
+    const { message, history = [], context = {} } = req.body;
     const store = getStore();
 
     if (!message || !message.trim()) {
       return res.status(400).json({ message: 'Message is required.' });
     }
 
-    // Auto-enrich context with user's current progress if not provided
-    if (!context.skill || !context.level) {
-      const progress = store.userProgress.find(p => p.userId === req.user.id);
-      if (progress) {
-        context.skill = progress.goalTitle || 'Full Stack Development';
-        context.level = `Level ${progress.currentLevelNumber || 1}`;
-      }
+    const user = store.users.find(u => u.id === req.user.id);
+    const progress = store.userProgress.find(p => p.userId === req.user.id);
+
+    // Auto-enrich context with user details & learning progress
+    if (user) {
+      context.userName = context.userName || user.name;
+      context.skillCredits = user.skillCredits;
     }
 
-    const aiResponse = await chatWithAI({ message, context });
+    if (progress) {
+      context.skill = context.skill || progress.goalTitle || 'Full Stack Development';
+      context.level = context.level || progress.currentLevelTitle || `Level ${progress.currentLevelNumber || 1}`;
+
+      const recentScores = [];
+      if (progress.levelProgress) {
+        Object.values(progress.levelProgress).forEach(lp => {
+          if (typeof lp.mcqScore === 'number') recentScores.push(lp.mcqScore);
+        });
+      }
+      context.recentScores = recentScores;
+    }
+
+    const aiResponse = await chatWithAI({ message, history, context });
     res.json(aiResponse);
   } catch (err) {
     res.status(500).json({ message: 'Error in AI chat', error: err.message });
